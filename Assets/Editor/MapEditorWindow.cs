@@ -101,6 +101,34 @@ public class MapEditorStateWindow : EditorWindow
         Debug.Log("aa");
     }
 
+    void OnDestroy()
+    {
+       int state = EditorUtility.DisplayDialogComplex
+            ("MapEditor",
+            "保存しますか？",
+            "はい",
+            "いいえ",
+            "キャンセル");
+
+        switch (state)
+        {
+            case 0:
+
+                break;
+
+            case 1:
+
+                break;
+
+            case 2:
+
+               
+
+                break;
+        }
+
+    }
+
     void OnGUI()
     {
 
