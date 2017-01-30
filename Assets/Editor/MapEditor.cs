@@ -20,6 +20,8 @@ public class MapEditor : Editor
             MEWindow.m_TargetMESWindow = MESWindow;
 
             MESWindow.m_TargetMap = target as Map;
+            MESWindow.m_TargetMEWindow = MEWindow;
+            MESWindow.Init();
 
             //if (MEWindow.m_TargetMap.m_MapChipNum.GetLength(0) < 0)
             //{

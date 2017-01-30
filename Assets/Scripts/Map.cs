@@ -5,12 +5,12 @@ using UnityEngine;
 public class Map : MonoBehaviour {
 
     //マップの幅
-    public int m_NumX = 0;
-    public int m_NumY = 0;
+    public int m_NumX = 1;
+    public int m_NumY = 1;
 
     //マップチップの大きさ
-    public int m_SizeX = 0;
-    public int m_SizeY = 0;
+    public int m_SizeX = 1;
+    public int m_SizeY = 1;
 
     //マップチップに使用するゲームオブジェクト
     [HideInInspector]
@@ -18,7 +18,7 @@ public class Map : MonoBehaviour {
 
     //マップチップの番号
     [HideInInspector]
-    public int[,] m_MapChipNum;
+    public int[,] m_MapChipNum = new int[1,1];
 
 	// Use this for initialization
 	void Start () {

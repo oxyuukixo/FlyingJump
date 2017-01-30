@@ -14,6 +14,15 @@ public class MapEditorWindow : EditorWindow
 
     Vector2 m_ScrollPos = Vector2.zero;
 
+    void OnDestroy()
+    {
+        if(m_TargetMESWindow)
+        {
+            m_TargetMESWindow.m_TargetMEWindow = null;
+            m_TargetMESWindow.Close();
+        }
+    }
+
     void OnGUI()
     {
         m_ScrollPos = EditorGUILayout.BeginScrollView(m_ScrollPos, GUI.skin.box);
@@ -32,37 +41,39 @@ public class MapEditorWindow : EditorWindow
         }
         EditorGUILayout.EndScrollView();
 
-        //for (int y = 0; y < m_TargetMESWindow.m_NewNumY; y++)
-        //{
-        //    for (int x = 0; x < m_TargetMESWindow.m_NewNumX; x++)
-        //    {
-        //        if (m_TargetMESWindow.m_NewMapChipNum[y, x] == -1)
-        //        {
-        //            continue;
-        //        }
-        //    }
-        //}
+        for (int y = 0; y < m_TargetMESWindow.m_NewNumY; y++)
+        {
+            for (int x = 0; x < m_TargetMESWindow.m_NewNumX; x++)
+            {
+                if (m_TargetMESWindow.m_NewMapChipNum[y, x] == -1)
+                {
+                    continue;
+                }
+
+                GUI.DrawTexture(new Rect(x * m_TargetMESWindow.m_NewSizeX, y * m_TargetMESWindow.m_NewSizeY, m_TargetMESWindow.m_NewSizeX, m_TargetMESWindow.m_NewSizeY), m_TargetMap.m_MapChipObject[m_TargetMESWindow.m_NewMapChipNum[y, x]].GetComponent<SpriteRenderer>().sprite.texture);
+            }
+        }
 
 
-        //Event e = Event.current;
-        //if (e.type == EventType.MouseDown || e.type == EventType.MouseDrag)
-        //{
-        //    if (e.button == 0)
-        //    {
-        //        int posX = (int)e.mousePosition.x / m_TargetMESWindow.m_NewSizeX;
-        //        int posY = (int)e.mousePosition.y / m_TargetMESWindow.m_NewSizeY;
+        Event e = Event.current;
+        if (e.type == EventType.MouseDown || e.type == EventType.MouseDrag)
+        {
+            if (e.button == 0)
+            {
+                int posX = (int)e.mousePosition.x / m_TargetMESWindow.m_NewSizeX;
+                int posY = (int)e.mousePosition.y / m_TargetMESWindow.m_NewSizeY;
 
-        //        if (posX < m_TargetMESWindow.m_NewNumX && posY < m_TargetMESWindow.m_NewNumY)
-        //        {
-        //            m_TargetMESWindow.m_NewMapChipNum[posY,posX] = m_TargetMESWindow.GetSelectChipNum();
-        //        }
-        //    }
+                if (posX < m_TargetMESWindow.m_NewNumX && posY < m_TargetMESWindow.m_NewNumY)
+                {
+                    m_TargetMESWindow.m_NewMapChipNum[posY, posX] = m_TargetMESWindow.GetSelectChipNum();
+                }
+            }
 
-        //    //if(e.button == 1)
-        //    //{
+            //if(e.button == 1)
+            //{
 
-        //    //}
-        //}
+            //}
+        }
     }
 }
 
@@ -70,6 +81,8 @@ public class MapEditorStateWindow : EditorWindow
 {
     //編集するマップのマネージャー
     public Map m_TargetMap;
+
+    public MapEditorWindow m_TargetMEWindow;
 
     public int[,] m_NewMapChipNum;
 
@@ -86,9 +99,15 @@ public class MapEditorStateWindow : EditorWindow
 
     Vector2 m_ScrollPos = Vector2.zero;
 
-    void Init()
+    public void Init()
     {
-        
+        m_NewNumX = m_TargetMap.m_NumX;
+        m_NewNumY = m_TargetMap.m_NumY;
+
+        m_NewSizeX = m_TargetMap.m_SizeX;
+        m_NewSizeY = m_TargetMap.m_SizeY;
+
+        m_NewMapChipNum = m_TargetMap.m_MapChipNum;
     }
 
     void OnSelectionChange()
@@ -103,29 +122,40 @@ public class MapEditorStateWindow : EditorWindow
 
     void OnDestroy()
     {
-       int state = EditorUtility.DisplayDialogComplex
-            ("MapEditor",
-            "保存しますか？",
-            "はい",
-            "いいえ",
-            "キャンセル");
-
-        switch (state)
+        if(EditorUtility.DisplayDialog("MapEditor","保存しますか？","はい","いいえ"))
         {
-            case 0:
+            Apply();
+        }
 
-                break;
+        if(m_TargetMEWindow)
+        {
+            m_TargetMEWindow.m_TargetMESWindow = null;
+            m_TargetMEWindow.Close();
+        }
 
-            case 1:
+       //int state = EditorUtility.DisplayDialogComplex
+       //     ("MapEditor",
+       //     "保存しますか？",
+       //     "はい",
+       //     "いいえ",
+       //     "キャンセル");
 
-                break;
+       // switch (state)
+       // {
+       //     case 0:
 
-            case 2:
+       //         break;
+
+       //     case 1:
+
+       //         break;
+
+       //     case 2:
 
                
 
-                break;
-        }
+       //         break;
+       // }
 
     }
 
@@ -161,29 +191,28 @@ public class MapEditorStateWindow : EditorWindow
         //ここまでで値が変更されていたらマップに反映する
         if (EditorGUI.EndChangeCheck())
         {
-            //if (m_NewNumY != 0 && m_NewNumX != 0)
-            //{
-            //    int[,] newMap = new int[m_NewNumY, m_NewNumX];
+            if (m_NewNumY != 0 && m_NewNumX != 0)
+            {
+                int[,] newMap = new int[m_NewNumY, m_NewNumX];
 
-            //    SetArryInit(newMap, -1);
+                SetArryInit(newMap, -1);
 
-            //    for (int y = 0; y < m_NewMapChipNum.GetLength(0); y++)
-            //    {
-            //        for (int x = 0; x < m_NewMapChipNum.GetLength(1); x++)
-            //        {
-            //            newMap[y, x] = m_NewMapChipNum[y, x];
-            //        }
-            //    }
+                for (int y = 0; y < m_NewMapChipNum.GetLength(0) && y < m_NewNumY; y++)
+                {
+                    for (int x = 0; x < m_NewMapChipNum.GetLength(1) && x < m_NewNumX; x++)
+                    {
+                        newMap[y, x] = m_NewMapChipNum[y, x];
+                    }
+                }
 
-            //    m_NewMapChipNum = newMap;
-            //}
+                m_NewMapChipNum = newMap;
+            }
         }
 
         if (m_TargetMap.m_MapChipObject.Count > 0)
         {
             EditorGUILayout.BeginVertical(GUI.skin.box);
             {
-
                 EditorGUILayout.LabelField(m_TargetMap.m_MapChipObject[selectedGridIndex].name);
 
                 if (GUILayout.Button("Delete"))
@@ -268,6 +297,15 @@ public class MapEditorStateWindow : EditorWindow
             }
         }
         EditorGUILayout.EndVertical();
+    }
+
+    private void Apply()
+    {
+        m_TargetMap.m_NumX = m_NewNumX;
+        m_TargetMap.m_NumY = m_NewNumY;
+
+        m_TargetMap.m_SizeX = m_NewSizeX;
+        m_TargetMap.m_SizeY = m_NewSizeY;
     }
 
     public int GetSelectChipNum()
