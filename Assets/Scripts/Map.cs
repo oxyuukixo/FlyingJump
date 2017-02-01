@@ -17,16 +17,27 @@ public class Map : MonoBehaviour {
     public List<GameObject> m_MapChipObject;
 
     //マップチップの番号
-    [HideInInspector]
-    public int[,] m_MapChipNum = new int[1,1];
+    [SerializeField]
+    public List<IntList> m_MapChipNum;
 
 	// Use this for initialization
 	void Start () {
-		
+ 
 	}
 	
 	// Update is called once per frame
 	void Update () {
 		
 	}
+}
+
+[System.Serializable]
+public class IntList
+{
+    public List<int> List = new List<int>();
+
+    public IntList(List<int> list)
+    {
+        List = list;
+    }
 }

@@ -133,7 +133,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Editor\MapEditor.cs" />
-    <Compile Include="Assets\Editor\MapEditorWindow.cs" />
+    <Compile Include="Assets\Editor\MapEditorMainWindow.cs" />
+    <Compile Include="Assets\Editor\MapEditorSubWindow.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="GenerateTargetFrameworkMonikerAttribute" />

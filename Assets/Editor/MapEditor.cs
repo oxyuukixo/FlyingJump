@@ -8,29 +8,54 @@ using System;
 [CustomEditor(typeof(Map))]
 public class MapEditor : Editor
 {
+    Map m_Target;
+
     public override void OnInspectorGUI()
     {
         //ボタンを表示
-        if (GUILayout.Button("Open MapEditorWindow"))
+        if (GUILayout.Button("Open MapEditorSubWindow"))
         {
-            MapEditorWindow MEWindow = EditorWindow.GetWindow(typeof(MapEditorWindow)) as MapEditorWindow;
-            MapEditorStateWindow MESWindow = EditorWindow.GetWindow(typeof(MapEditorStateWindow)) as MapEditorStateWindow;
+            MapEditorSubWindow SubWindow = EditorWindow.GetWindow(typeof(MapEditorSubWindow)) as MapEditorSubWindow;
+          
+            bool isNewWindow = false;
 
-            MEWindow.m_TargetMap = target as Map;
-            MEWindow.m_TargetMESWindow = MESWindow;
+            if (m_Target != target || (SubWindow.m_TargetMap && SubWindow.m_TargetMap != target))
+            {
+                int selsect = EditorUtility.DisplayDialogComplex(SubWindow.m_TargetMap.gameObject.name, "保存しますか？", "はい", "いいえ", "キャンセル");
 
-            MESWindow.m_TargetMap = target as Map;
-            MESWindow.m_TargetMEWindow = MEWindow;
-            MESWindow.Init();
+                switch(selsect)
+                {
+                    case 0:
 
-            //if (MEWindow.m_TargetMap.m_MapChipNum.GetLength(0) < 0)
-            //{
-            //    MEWindow.m_TargetMap.m_MapChipNum = new int[MEWindow.m_TargetMap.m_NumY, MEWindow.m_TargetMap.m_NumX];
+                        isNewWindow = true;
 
-            //    MESWindow.SetArryInit(MEWindow.m_TargetMap.m_MapChipNum, -1);
-            //}
+                        break;
 
-            //MEWindow.m_TargetMap.m_MapChipNum.CopyTo(MESWindow.m_NewMapChipNum, 0);
+                    case 1:
+
+                        isNewWindow = true;
+
+                        break;
+
+                    case 2:
+
+                        break;
+                }
+            }
+
+            if(isNewWindow || !SubWindow.m_TargetMap)
+            {
+                MapEditorMainWindow MainWindow = EditorWindow.GetWindow(typeof(MapEditorMainWindow)) as MapEditorMainWindow;
+
+                m_Target = target as Map;
+
+                SubWindow.m_TargetMap = m_Target;
+                SubWindow.m_MainWindow = MainWindow;
+
+                MainWindow.m_TargetMap = m_Target;
+                MainWindow.m_SubWindow = SubWindow;
+                MainWindow.Init();
+            }
         }
     }
 }
