@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
+using System;
+using System.IO;
 
 public class MapEditorMainWindow : EditorWindow
 {
@@ -61,18 +63,13 @@ public class MapEditorMainWindow : EditorWindow
                     m_NewMapChipNum[y].List.Add(-1);
                 }
             }
-
-            //SetArryInit(m_NewMapChipNum, -1, m_NewNumX, m_NewNumY);
-
-            //m_TargetMap.m_MapChipNum = new int[1][];
-            //SetArryInit(m_TargetMap.m_MapChipNum, -1);
         }
 
     }
 
     void OnDestroy()
     {
-        if (EditorUtility.DisplayDialog(m_TargetMap.gameObject.name, "保存しますか？", "はい", "いいえ"))
+        if (EditorUtility.DisplayDialog("マップの保存", "保存しますか？", "はい", "いいえ"))
         {
             Apply();
         }
@@ -86,6 +83,12 @@ public class MapEditorMainWindow : EditorWindow
 
     void OnGUI()
     {
+        if (!m_TargetMap)
+        {
+            EditorGUILayout.LabelField("編集するマップが選択されていません");
+            return;
+        }
+
         //縦に整列
         EditorGUILayout.BeginVertical(GUI.skin.box);
         {
@@ -220,34 +223,23 @@ public class MapEditorMainWindow : EditorWindow
         }
         EditorGUILayout.EndVertical();
 
-
         if (m_TargetMap.m_MapChipObject.Count > 0)
         {
+            for (int i = 0; i < m_TargetMap.m_MapChipObject.Count; i++)
+            {
+                if(!m_TargetMap.m_MapChipObject[i])
+                {
+                    DeleteMapChip(i);
+                }
+            }
+
             EditorGUILayout.BeginVertical(GUI.skin.box);
             {
                 EditorGUILayout.LabelField(m_TargetMap.m_MapChipObject[m_SelectedGridIndex].name);
 
                 if (GUILayout.Button("Delete"))
                 {
-                    for (int y = 0; y < m_NewNumY; y++)
-                    {
-                        for (int x = 0; x < m_NewNumX; x++)
-                        {
-                            if (m_NewMapChipNum[y].List[x] > m_SelectedGridIndex)
-                            {
-                                m_NewMapChipNum[y].List[x] -= 1;
-                            }
-                            else if (m_NewMapChipNum[y].List[x] == m_SelectedGridIndex)
-                            {
-                                m_NewMapChipNum[y].List[x] = -1;
-                            }
-
-                        }
-                    }
-
-                    m_TargetMap.m_MapChipObject.RemoveAt(m_SelectedGridIndex);
-
-                    m_SelectedGridIndex = 0;
+                    DeleteMapChip(m_SelectedGridIndex);
                 }
             }
             EditorGUILayout.EndVertical();
@@ -264,7 +256,7 @@ public class MapEditorMainWindow : EditorWindow
                     texture[i] = m_TargetMap.m_MapChipObject[i].GetComponent<SpriteRenderer>().sprite.texture;
                 }
 
-                int numX = Screen.width / 100;
+                int numX = Screen.width / 100 + 1;
 
                 if (numX <= 0)
                 {
@@ -308,14 +300,40 @@ public class MapEditorMainWindow : EditorWindow
 
                         foreach (var draggedObject in DragAndDrop.objectReferences)
                         {
-                            GameObject obj = draggedObject as GameObject;
-
-                            if (obj)
+                            if (draggedObject.GetType() == typeof(GameObject))
                             {
-                                Debug.Log("Drag Object:" + AssetDatabase.GetAssetPath(draggedObject));
-                                m_TargetMap.m_MapChipObject.Add(obj);
+                                bool IsSame = false;
+
+                                for (int i = 0; i < m_TargetMap.m_MapChipObject.Count; i++)
+                                {
+                                    if(m_TargetMap.m_MapChipObject[i] ==  draggedObject)
+                                    {
+                                        IsSame = true;
+                                        break;
+                                    }
+                                }
+
+                                if(!IsSame)
+                                {
+                                    m_TargetMap.m_MapChipObject.Add(draggedObject as GameObject);
+                                }
                             }
 
+                            if(draggedObject.GetType() == typeof(Sprite))
+                            {
+                                GameObject newobj = new GameObject();
+
+                                newobj.name = draggedObject.name;
+                                newobj.AddComponent<SpriteRenderer>();
+                                newobj.GetComponent<SpriteRenderer>().sprite = draggedObject as Sprite;
+
+                                GameObject prefab = PrefabUtility.CreatePrefab("Assets/Resources/Prefabs/MapChip/" + newobj.name + ".prefab", newobj);
+                                UnityEditor.AssetDatabase.SaveAssets();
+
+                                m_TargetMap.m_MapChipObject.Add(prefab);
+
+                                GameObject.DestroyImmediate(newobj);
+                            }
                         }
                         DragAndDrop.activeControlID = 0;
                     }
@@ -334,14 +352,31 @@ public class MapEditorMainWindow : EditorWindow
         EditorGUILayout.EndVertical();
     }
 
-    //=============================================================================
-    //
-    // Purpose : フォーカスが失われたときの処理．
-    //
-    //=============================================================================
-    void OnFocus()
+    public void DeleteMapChip(int ChipNum)
     {
+        if (ChipNum >= 0 && ChipNum < m_TargetMap.m_MapChipObject.Count)
 
+            for (int y = 0; y < m_NewNumY; y++)
+            {
+                for (int x = 0; x < m_NewNumX; x++)
+                {
+                    if (m_NewMapChipNum[y].List[x] > ChipNum)
+                    {
+                        m_NewMapChipNum[y].List[x] -= 1;
+                    }
+                    else if (m_NewMapChipNum[y].List[x] == ChipNum)
+                    {
+                        m_NewMapChipNum[y].List[x] = -1;
+                    }
+
+                }
+            }
+
+        m_TargetMap.m_MapChipObject.RemoveAt(ChipNum);
+
+        m_SelectedGridIndex = 0;
+
+        m_SubWindow.Repaint();
     }
 
     //=============================================================================
@@ -428,7 +463,7 @@ public class MapEditorMainWindow : EditorWindow
 
                     obj.transform.parent = m_TargetMap.gameObject.transform;
 
-                    obj.transform.localPosition = new Vector2(x * m_NewSizeX, -y * m_NewSizeY);
+                    obj.transform.localPosition = new Vector2(m_NewSizeX / 2 + x * m_NewSizeX, - (m_NewSizeY / 2 + y * m_NewSizeY));
                 }
             }
         }

@@ -19,7 +19,7 @@ public class MapEditor : Editor
           
             bool isNewWindow = false;
 
-            if (m_Target != target || (SubWindow.m_TargetMap && SubWindow.m_TargetMap != target))
+            if (m_Target != target && (SubWindow.m_TargetMap && SubWindow.m_TargetMap != target))
             {
                 int selsect = EditorUtility.DisplayDialogComplex(SubWindow.m_TargetMap.gameObject.name, "保存しますか？", "はい", "いいえ", "キャンセル");
 
