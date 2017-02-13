@@ -4,10 +4,6 @@ using UnityEngine;
 
 public class TitleManager : SingletonMonoBehaviour<TitleManager> {
 
-    public AudioClip BGM;
-
-    private AudioSource Audio;
-
 	// Use this for initialization
 	void Awake () {
 
