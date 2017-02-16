@@ -57,13 +57,13 @@ public class FadeManager : SingletonMonoBehaviour<FadeManager>
     //
     //=============================================================================
 
-    public void LoadScene(string name, float fadeTime = 2f)
+    public void LoadScene(string name, float fadeOutTime = 2f ,float fadeInTime = 2f)
     {
         if (!m_IsFadeing && !m_IsLoadScene)
         {
             m_IsLoadScene = true;
 
-            StartCoroutine(LoadingScene(name, fadeTime));
+            StartCoroutine(LoadingScene(name, fadeOutTime, fadeInTime));
         }
     }
 
@@ -73,9 +73,9 @@ public class FadeManager : SingletonMonoBehaviour<FadeManager>
     //
     //=============================================================================
 
-    private IEnumerator LoadingScene(string name, float fadeTime)
+    private IEnumerator LoadingScene(string name, float fadeOutTime = 2f, float fadeInTime = 2f)
     {
-        FadeOut(fadeTime);
+        FadeOut(fadeOutTime);
 
         while (m_IsFadeing)
         {
@@ -84,7 +84,7 @@ public class FadeManager : SingletonMonoBehaviour<FadeManager>
 
         SceneManager.LoadScene(name);
 
-        FadeIn(fadeTime);
+        FadeIn(fadeInTime);
 
         while (m_IsFadeing)
         {

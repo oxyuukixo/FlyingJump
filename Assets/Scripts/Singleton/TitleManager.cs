@@ -17,6 +17,8 @@ public class TitleManager : SingletonMonoBehaviour<TitleManager> {
     void Start()
     {
         SoundManager.Instance.LoadBGM("Title", "title", true);
+        SoundManager.Instance.LoadSE("enter", "enter", true);
+
         SoundManager.Instance.PlayBGM("Title");
     }
 	
@@ -25,8 +27,10 @@ public class TitleManager : SingletonMonoBehaviour<TitleManager> {
 
         if (Input.touchCount > 0 || Input.GetKeyDown(KeyCode.Space))
         {
-            SoundManager.Instance.FadeOutBGM(2f);
-            FadeManager.Instance.LoadScene("Stage01");
+            SoundManager.Instance.PlaySE("enter");
+
+            SoundManager.Instance.FadeOutBGM(3f);
+            FadeManager.Instance.LoadScene("Stage01",3f);
            
         }
     }

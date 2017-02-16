@@ -12,6 +12,8 @@ public class MapEditorSubWindow : EditorWindow
 
     Vector2 m_ScrollPos = Vector2.zero;
 
+    bool m_CanDrag = false;
+
     void OnDestroy()
     {
         if (m_MainWindow)
@@ -65,13 +67,36 @@ public class MapEditorSubWindow : EditorWindow
                 Handles.DrawLine(new Vector2(area.x, area.y + m_MainWindow.m_NewSizeY * y), new Vector2(area.x + m_MainWindow.m_NewSizeX * m_MainWindow.m_NewNumX, area.y + m_MainWindow.m_NewSizeY * y));
             }
 
-
             Event e = Event.current;
-            if (e.type == EventType.MouseDown || e.type == EventType.MouseDrag)
+
+            if (e.type == EventType.MouseDown || (e.type == EventType.MouseDrag && m_CanDrag))
             {
-                if (e.button == 0)
+                Vector2 pos = e.mousePosition - m_ScrollPos;
+
+                if(pos.x > 0 && pos.y > 0 && pos.x < m_MainWindow.m_NewNumX * m_MainWindow.m_NewSizeX && pos.y < m_MainWindow.m_NewNumY * m_MainWindow.m_NewSizeY)
                 {
-                    if (m_TargetMap.m_MapChipObject.Count > 0)
+                    if (e.button == 0)
+                    {
+                        if (m_TargetMap.m_MapChipObject.Count > 0)
+                        {
+                            int posX = (int)((e.mousePosition.x - area.x) / m_MainWindow.m_NewSizeX);
+                            int posY = (int)((e.mousePosition.y - area.y) / m_MainWindow.m_NewSizeY);
+
+                            if (posX >= 0 && posX < m_MainWindow.m_NewNumX &&
+                                posY >= 0 && posY < m_MainWindow.m_NewNumY)
+                            {
+                                m_MainWindow.m_NewMapChipNum[posY].List[posX] = m_MainWindow.GetSelectChipNum();
+
+                                m_CanDrag = true;
+                            }
+
+                            Repaint();
+
+                            m_MainWindow.m_IsEdit = true;
+                        }
+                    }
+
+                    if (e.button == 1)
                     {
                         int posX = (int)((e.mousePosition.x - area.x) / m_MainWindow.m_NewSizeX);
                         int posY = (int)((e.mousePosition.y - area.y) / m_MainWindow.m_NewSizeY);
@@ -79,25 +104,24 @@ public class MapEditorSubWindow : EditorWindow
                         if (posX >= 0 && posX < m_MainWindow.m_NewNumX &&
                             posY >= 0 && posY < m_MainWindow.m_NewNumY)
                         {
-                            m_MainWindow.m_NewMapChipNum[posY].List[posX] = m_MainWindow.GetSelectChipNum();
+                            m_MainWindow.m_NewMapChipNum[posY].List[posX] = -1;
+                            m_CanDrag = true;
                         }
 
                         Repaint();
-                    }
-                }
 
-                if (e.button == 1)
+                        m_MainWindow.m_IsEdit = true;
+                    }
+                } 
+                else
                 {
-                    int posX = (int)((e.mousePosition.x - area.x) / m_MainWindow.m_NewSizeX);
-                    int posY = (int)((e.mousePosition.y - area.y) / m_MainWindow.m_NewSizeY);
+                    m_CanDrag = false;
+                }      
+            }
 
-                    if (posX < m_MainWindow.m_NewNumX && posY < m_MainWindow.m_NewNumY)
-                    {
-                        m_MainWindow.m_NewMapChipNum[posY].List[posX] = -1;
-                    }
-
-                    Repaint();
-                }
+            if (e.type == EventType.MouseUp)
+            {
+                m_CanDrag = false;
             }
         }
         EditorGUILayout.EndScrollView();

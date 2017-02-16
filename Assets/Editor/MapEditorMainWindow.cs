@@ -20,6 +20,8 @@ public class MapEditorMainWindow : EditorWindow
     public int m_NewSizeX = 0;
     public int m_NewSizeY = 0;
 
+    public bool m_IsEdit = false;
+
     private int m_SelectedGridIndex = 0;
 
     Vector2 m_ScrollPos = Vector2.zero;
@@ -32,6 +34,53 @@ public class MapEditorMainWindow : EditorWindow
 
     public void Init()
     {
+        bool isMapObj = false;
+        bool isEnemyObj = false;
+        bool isCollisionObj = false;
+
+        foreach(Transform child in m_TargetMap.transform)
+        {
+            if(child.name == "MapChip")
+            {
+                isMapObj = true;
+                continue;
+            }
+            if (child.name == "Enemy")
+            {
+                isEnemyObj = true;
+                continue;
+            }
+            if (child.name == "Collision")
+            {
+                isCollisionObj = true;
+                continue;
+            }
+        }
+
+        if(!isMapObj)
+        {
+            GameObject obj = new GameObject();
+            obj.name = "MapChip";
+            obj.transform.position = m_TargetMap.transform.position;
+            obj.transform.SetParent(m_TargetMap.transform);
+        }
+
+        if(!isEnemyObj)
+        {
+            GameObject obj = new GameObject();
+            obj.name = "Enemy";
+            obj.transform.position = m_TargetMap.transform.position;
+            obj.transform.SetParent(m_TargetMap.transform);
+        }
+
+        if (!isCollisionObj)
+        {
+            GameObject obj = new GameObject();
+            obj.name = "Collision";
+            obj.transform.position = m_TargetMap.transform.position;
+            obj.transform.SetParent(m_TargetMap.transform);
+        }
+
         m_NewNumX = m_TargetMap.m_NumX;
         m_NewNumY = m_TargetMap.m_NumY;
 
@@ -69,9 +118,12 @@ public class MapEditorMainWindow : EditorWindow
 
     void OnDestroy()
     {
-        if (EditorUtility.DisplayDialog("マップの保存", "保存しますか？", "はい", "いいえ"))
+        if(m_IsEdit)
         {
-            Apply();
+            if (EditorUtility.DisplayDialog("マップの保存", "保存しますか？", "はい", "いいえ"))
+            {
+                Apply();
+            }
         }
 
         if (m_SubWindow)
@@ -144,6 +196,8 @@ public class MapEditorMainWindow : EditorWindow
                         m_NewNumX = newNumX;
                         EditorUtility.SetDirty(this);
 
+                        m_IsEdit = true;
+
                         SetMapSize();
                     }
                 }
@@ -198,6 +252,8 @@ public class MapEditorMainWindow : EditorWindow
                         m_NewNumY = newNumY;
                         EditorUtility.SetDirty(this);
 
+                        m_IsEdit = true;
+
                         SetMapSize();
                     }
                 }
@@ -218,6 +274,8 @@ public class MapEditorMainWindow : EditorWindow
             //ここまでで値が変更されていたらマップに反映する
             if (EditorGUI.EndChangeCheck())
             {
+                m_IsEdit = true;
+
                 SetMapSize();
             }
         }
@@ -326,6 +384,7 @@ public class MapEditorMainWindow : EditorWindow
                                 newobj.name = draggedObject.name;
                                 newobj.AddComponent<SpriteRenderer>();
                                 newobj.GetComponent<SpriteRenderer>().sprite = draggedObject as Sprite;
+                                newobj.GetComponent<SpriteRenderer>().sortingLayerName = "Block";
 
                                 GameObject prefab = PrefabUtility.CreatePrefab("Assets/Resources/Prefabs/MapChip/" + newobj.name + ".prefab", newobj);
                                 UnityEditor.AssetDatabase.SaveAssets();
@@ -430,6 +489,10 @@ public class MapEditorMainWindow : EditorWindow
     //=============================================================================
     private void Apply()
     {
+        GameObject mapObj = m_TargetMap.transform.FindChild("MapChip").gameObject;
+
+        m_IsEdit = false;
+
         m_TargetMap.m_NumX = m_NewNumX;
         m_TargetMap.m_NumY = m_NewNumY;
 
@@ -448,9 +511,9 @@ public class MapEditorMainWindow : EditorWindow
             }
         }
 
-        for (int i = m_TargetMap.transform.childCount - 1; i >= 0; --i)
+        for (int i = mapObj.transform.childCount - 1; i >= 0; --i)
         {
-            GameObject.DestroyImmediate(m_TargetMap.transform.GetChild(i).gameObject);
+            GameObject.DestroyImmediate(mapObj.transform.GetChild(i).gameObject);
         }
 
         for (int y = 0; y < m_NewNumY; y++)
@@ -461,12 +524,42 @@ public class MapEditorMainWindow : EditorWindow
                 {
                     GameObject obj = Instantiate(m_TargetMap.m_MapChipObject[m_NewMapChipNum[y].List[x]]);
 
-                    obj.transform.parent = m_TargetMap.gameObject.transform;
+                    obj.transform.parent = mapObj.gameObject.transform;
 
                     obj.transform.localPosition = new Vector2(m_NewSizeX / 2 + x * m_NewSizeX, - (m_NewSizeY / 2 + y * m_NewSizeY));
                 }
             }
         }
+
+        GameObject collisionObj = m_TargetMap.transform.FindChild("Collision").gameObject;
+
+        for (int i = collisionObj.transform.childCount - 1; i >= 0; --i)
+        {
+            GameObject.DestroyImmediate(collisionObj.transform.GetChild(i).gameObject);
+        }
+
+        GameObject newObj = new GameObject();
+    
+        BoxCollider2D col = newObj.AddComponent<BoxCollider2D>();
+        col.size = new Vector2(m_NewNumX * m_NewSizeX, 100);
+
+        newObj.transform.SetParent(collisionObj.transform);
+        newObj.name = "UpCollsion";
+        newObj.tag = "UpCameraBlock";
+        newObj.transform.localPosition = new Vector2(col.size.x / 2,col.size.y / 2);
+        newObj.layer = LayerMask.NameToLayer("CameraBlock");
+
+        newObj = new GameObject();
+
+        col = newObj.AddComponent<BoxCollider2D>();
+        col.size = new Vector2(m_NewNumX * m_NewSizeX, 100);
+
+        newObj.transform.SetParent(collisionObj.transform);
+        newObj.name = "DownCollsion";
+        newObj.tag = "DownCameraBlock";
+        newObj.transform.localPosition = new Vector2(col.size.x / 2, -(m_NewNumY * m_NewSizeY + col.size.y / 2));
+        newObj.layer = LayerMask.NameToLayer("CameraBlock");
+
     }
 
     //=============================================================================

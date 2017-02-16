@@ -1,9 +1,11 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class SoundManager : SingletonMonoBehaviour<SoundManager>
 {
+    //ボリューム
     public float m_BGMVolume = 1f;
     public float m_SEVolume = 1f;
 
@@ -62,7 +64,7 @@ public class SoundManager : SingletonMonoBehaviour<SoundManager>
 
                 case SoundType.SE:
 
-                    m_FileName = "Sound/SE/" + fileName;
+                    m_FileName = "Sounds/SE/" + fileName;
 
                     break;
             }
@@ -106,6 +108,8 @@ public class SoundManager : SingletonMonoBehaviour<SoundManager>
         {
             m_SourceArraySE[i] = gameObject.AddComponent<AudioSource>();
         }
+
+        SceneManager.sceneLoaded += DeleteSceneSound;
     }
 
     //=============================================================================
@@ -164,8 +168,23 @@ public class SoundManager : SingletonMonoBehaviour<SoundManager>
     {
         if (m_PoolBGM.ContainsKey(key))
         {
-            // すでに登録済みなのでいったん消す
-            m_PoolBGM.Remove(key);
+            //// すでに登録済みなのでいったん消す
+            //if (m_SourceBGM.clip == m_PoolBGM[key].m_Clip)
+            //{
+            //    m_SourceBGM.clip = null;
+            //}
+
+            //foreach (AudioSource audio in m_SourceArrayBGM)
+            //{
+            //    if (audio.clip == m_PoolBGM[key].m_Clip)
+            //    {
+            //        audio.clip = null;
+            //    }
+            //}
+
+            //m_PoolBGM.Remove(key);
+
+            return;
         }
 
         m_PoolBGM.Add(key, new Data(SoundType.BGM, key, fileName));
@@ -186,8 +205,23 @@ public class SoundManager : SingletonMonoBehaviour<SoundManager>
     {
         if (m_PoolSE.ContainsKey(key))
         {
-            // すでに登録済みなのでいったん消す
-            m_PoolSE.Remove(key);
+            //// すでに登録済みなのでいったん消す
+            //if (m_SourceSE.clip == m_PoolSE[key].m_Clip)
+            //{
+            //    m_SourceSE.clip = null;
+            //}
+
+            //foreach (AudioSource audio in m_SourceArraySE)
+            //{
+            //    if (audio.clip == m_PoolSE[key].m_Clip)
+            //    {
+            //        audio.clip = null;
+            //    }
+            //}
+
+            //m_PoolSE.Remove(key);
+
+            return;
         }
 
         m_PoolSE.Add(key, new Data(SoundType.SE, key, fileName));
@@ -398,15 +432,13 @@ public class SoundManager : SingletonMonoBehaviour<SoundManager>
             return false;
         }
 
-        AudioSource playudio;
-
         // リソースの取得
         var data = m_PoolSE[key];
 
         if (0 <= channel && channel < SE_CHANNEL)
         {
             // チャンネル指定
-            var source = GetAudioSource(SoundType.SE, channel);
+            AudioSource source = GetAudioSource(SoundType.SE, channel);
             source.clip = data.m_Clip;
             source.volume = m_SEVolume;
             source.Play();
@@ -414,11 +446,58 @@ public class SoundManager : SingletonMonoBehaviour<SoundManager>
         else
         {
             // デフォルトで再生
-            var source = GetAudioSource(SoundType.SE);
+            AudioSource source = GetAudioSource(SoundType.SE);
             source.volume = m_SEVolume;
             source.PlayOneShot(data.m_Clip);
         }
 
         return true;
+    }
+
+    //=============================================================================
+    //
+    // Purpose : シーン移動時のサウンド削除関数．
+    //
+    //=============================================================================
+    void DeleteSceneSound(Scene scenename,LoadSceneMode SceneMode)
+    {
+        foreach(string key in m_SceneOnlyBGM)
+        {
+            if(m_SourceBGM.clip == m_PoolBGM[key].m_Clip)
+            {
+                m_SourceBGM.clip = null;
+            }
+
+            foreach(AudioSource audio in m_SourceArrayBGM)
+            {
+                if(audio.clip == m_PoolBGM[key].m_Clip)
+                {
+                    audio.clip = null;
+                }
+            }
+
+            m_PoolBGM.Remove(key);
+        }
+
+        foreach (string key in m_SceneOnlySE)
+        {
+            if (m_SourceSE.clip == m_PoolSE[key].m_Clip)
+            {
+                m_SourceSE.clip = null;
+            }
+
+            foreach (AudioSource audio in m_SourceArraySE)
+            {
+                if (audio.clip == m_PoolSE[key].m_Clip)
+                {
+                    audio.clip = null;
+                }
+            }
+
+            m_PoolSE.Remove(key);
+        }
+
+        m_SceneOnlyBGM.Clear();
+        m_SceneOnlySE.Clear();
     }
 }

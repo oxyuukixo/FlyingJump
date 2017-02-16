@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Map : MonoBehaviour {
+public class Map : MonoBehaviour,ScrollObjectInterface {
 
     //マップの幅
     public int m_NumX = 1;
@@ -29,6 +29,26 @@ public class Map : MonoBehaviour {
 	void Update () {
 		
 	}
+
+    public float GetX()
+    {
+        return transform.position.x;
+    }
+
+    public float GetY()
+    {
+        return transform.position.y;
+    }
+
+    public float GetWidth()
+    {
+        return m_NumX * m_SizeX;
+    }
+
+    public float GetHeight()
+    {
+        return m_NumY * m_SizeY;
+    }
 }
 
 [System.Serializable]

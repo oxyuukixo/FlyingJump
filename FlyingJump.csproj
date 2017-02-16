@@ -79,6 +79,9 @@
     <Reference Include="UnityEditor.iOS.Extensions.Common">
       <HintPath>Library\UnityAssemblies\UnityEditor.iOS.Extensions.Common.dll</HintPath>
     </Reference>
+    <Reference Include="Assembly-CSharp-firstpass">
+      <HintPath>Library\ScriptAssemblies\Assembly-CSharp-firstpass.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="FlyingJump.Plugins.csproj">
@@ -87,23 +90,29 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\Scripts\BackGroundScroll.cs" />
-    <Compile Include="Assets\Scripts\Bullet.cs" />
-    <Compile Include="Assets\Scripts\BulletShot.cs" />
-    <Compile Include="Assets\Scripts\CameraDotbyDot.cs" />
-    <Compile Include="Assets\Scripts\CameraMovement.cs" />
-    <Compile Include="Assets\Scripts\EffectDestroy.cs" />
+    <Compile Include="Assets\Scripts\BackGround.cs" />
+    <Compile Include="Assets\Scripts\Effect.cs" />
+    <Compile Include="Assets\Scripts\Enemy\Boss\Boss.cs" />
+    <Compile Include="Assets\Scripts\Enemy\Boss\GargoyleKing.cs" />
+    <Compile Include="Assets\Scripts\Enemy\Daemon.cs" />
+    <Compile Include="Assets\Scripts\Enemy\Enemy.cs" />
+    <Compile Include="Assets\Scripts\Enemy\Fire\EnemyFire.cs" />
+    <Compile Include="Assets\Scripts\Enemy\Move\EnemyMove.cs" />
+    <Compile Include="Assets\Scripts\Enemy\Mushroom.cs" />
+    <Compile Include="Assets\Scripts\EnemyBullet.cs" />
     <Compile Include="Assets\Scripts\FollowObject.cs" />
     <Compile Include="Assets\Scripts\InputCtl.cs" />
+    <Compile Include="Assets\Scripts\Interface\ScrollObjectInterface.cs" />
+    <Compile Include="Assets\Scripts\MainCameraManager.cs" />
     <Compile Include="Assets\Scripts\Map.cs" />
+    <Compile Include="Assets\Scripts\PlayerBullet.cs" />
     <Compile Include="Assets\Scripts\PlayerScript.cs" />
-    <Compile Include="Assets\Scripts\ScrollControll.cs" />
     <Compile Include="Assets\Scripts\Singleton\FadeManager.cs" />
+    <Compile Include="Assets\Scripts\Singleton\GameManager.cs" />
+    <Compile Include="Assets\Scripts\Singleton\ScrollManager.cs" />
     <Compile Include="Assets\Scripts\Singleton\SingletonMonoBehaviour.cs" />
     <Compile Include="Assets\Scripts\Singleton\SoundManager.cs" />
     <Compile Include="Assets\Scripts\Singleton\TitleManager.cs" />
-    <Compile Include="Assets\Scripts\TileMapBlockingObject.cs" />
-    <Compile Include="Assets\Scripts\TileMapScroll.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Standard Assets\CrossPlatformInput\CrossPlatformInputGuidelines.txt" />

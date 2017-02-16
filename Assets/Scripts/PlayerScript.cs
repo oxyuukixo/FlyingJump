@@ -5,196 +5,281 @@ using UnityStandardAssets.CrossPlatformInput;
 
 public class PlayerScript : MonoBehaviour
 {
-    public float Speed = 3.0f;
+    public float m_Speed = 3.0f;
 
-    public bool IsFly = true;
+    public float m_GravityScale;
 
-    public GameObject MainCamera;
+    public float[] m_JumpPower;
 
-    public float GravityScale;
+    public LayerMask m_GroundLayer;
 
-    public float[] JumpPower;
+    public GameObject m_InputController;
 
-    public LayerMask GroundLayer;
+    public GameObject m_Bullet;
 
-    public GameObject InputController;
+    public float m_ShotInterval;
 
-    public GameObject Bullet;
-
-    public float ShotInterval;
-
+    public GameObject m_DeathObject;
 
     [System.NonSerialized]
-    public bool IsDied;
+    public bool m_IsDied;
 
+    private enum State
+    {
+        Fly,
+        Run,
+        FlyStart,
+        RunStart
+    }
 
-    private Animator Anim;
+    private State m_State;
 
-    private Rigidbody2D RigiBody;
+    private Animator m_Anim;
 
-    private bool[] IsJump;
+    private Rigidbody2D m_RigiBody;
 
-    private bool IsJumping = false;
+    private Vector2 m_NeutralPos;
 
-    private int JumpNum = 0;
+    private bool[] m_IsJump;
 
-    private float ShotElapsedTime;
+    private bool m_IsJumping = false;
+
+    private int m_JumpNum = 0;
+
+    private float m_ShotElapsedTime;
 
     // Use this for initialization
     void Start()
     {
-        //gameObject.layer = LayerMask.NameToLayer("Player");
+        m_IsJump = new bool[m_JumpPower.Length];
 
-        IsJump = new bool[JumpPower.Length];
+        m_Anim = GetComponent<Animator>();
 
-        Anim = GetComponent<Animator>();
+        m_RigiBody = GetComponent<Rigidbody2D>();
 
-        RigiBody = GetComponent<Rigidbody2D>();
+        m_NeutralPos = transform.position;
+
+        SoundManager.Instance.LoadSE("jump", "jump_1");
+        SoundManager.Instance.LoadSE("enemyjump", "enemyjump");
+        SoundManager.Instance.LoadSE("fire", "player_bullet");
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (IsFly)
+        switch(m_State)
         {
-            //float AxisX = Input.GetAxis("Horizontal") / 1;
-            //float AxisY = Input.GetAxis("Vertical") / 1;
+            case State.Fly:
 
-            float AxisX = CrossPlatformInputManager.GetAxis("Horizontal") / 1;
-            float AxisY = CrossPlatformInputManager.GetAxis("Vertical") / 1;
+                float AxisX = CrossPlatformInputManager.GetAxis("Horizontal") / 1;
+                float AxisY = CrossPlatformInputManager.GetAxis("Vertical") / 1;
 
-            if (AxisX * AxisX + AxisY * AxisY > 0)
-            {
-                float Dir;
-
-                if (Mathf.Abs(AxisX) >= Mathf.Abs(AxisY))
+                if (AxisX * AxisX + AxisY * AxisY > 0)
                 {
-                    Dir = AxisY / AxisX;
+                    float Dir;
+
+                    if (Mathf.Abs(AxisX) >= Mathf.Abs(AxisY))
+                    {
+                        Dir = AxisY / AxisX;
+                    }
+                    else
+                    {
+                        Dir = AxisX / AxisY;
+                    }
+
+                    float Rate = 1.0f / Mathf.Sqrt(1.0f + Dir * Dir);
+
+                    AxisX *= Rate * m_Speed;
+                    AxisY *= Rate * m_Speed;
+                }
+
+                m_RigiBody.velocity = new Vector2(AxisX, AxisY);
+
+                break;
+
+            case State.Run:
+
+                if (CrossPlatformInputManager.GetButtonDown("Jump") && m_JumpNum < m_IsJump.Length)
+                {
+                    SoundManager.Instance.PlaySE("jump",0);
+
+                    m_RigiBody.velocity = new Vector2(m_RigiBody.velocity.x, 0);
+
+                    m_RigiBody.AddForce(Vector2.up * m_JumpPower[m_JumpNum], ForceMode2D.Impulse);
+
+                    m_Anim.SetBool("IsJumping", true);
+
+                    m_IsJumping = true;
+
+                    m_JumpNum++;
+                }
+
+                m_Anim.SetFloat("JumpPower", m_RigiBody.velocity.y);
+
+                if (transform.position.x < m_NeutralPos.x)
+                {
+                    transform.position += new Vector3(ScrollManager.Instance.m_ScrollSpeed * Time.deltaTime / 5, 0);
+
+                    if (transform.position.x > m_NeutralPos.x)
+                    {
+                        transform.position = new Vector2(m_NeutralPos.x, transform.position.y);
+                    }
+                }
+                if (transform.position.x > m_NeutralPos.x)
+                {
+                    transform.position -= new Vector3(ScrollManager.Instance.m_ScrollSpeed * Time.deltaTime, 0);
+
+                    if (transform.position.x < m_NeutralPos.x)
+                    {
+                        transform.position = new Vector2(m_NeutralPos.x, transform.position.y);
+                    }
+                }
+
+                if (Input.GetKeyDown(KeyCode.Space))
+                {
+                    FlyStart();
+                }
+
+                break;
+
+            case State.FlyStart:
+
+                if(transform.position.y >= m_NeutralPos.y)
+                {
+                    transform.position = new Vector2(transform.position.x, m_NeutralPos.y);
+                    m_RigiBody.velocity = new Vector2(0, 0);
+                    m_RigiBody.gravityScale = 0;
+
+                    m_Anim.SetTrigger("Move");
+
+                    if (!MainCameraManager.Instance.IsChange)
+                    {
+                        m_State = State.Fly;
+
+                        gameObject.layer = LayerMask.NameToLayer("FlyPlayer");
+
+                        m_InputController.GetComponent<InputCtl>().FlyButtonSet();
+                    }
+                }
+                
+                break;
+
+            case State.RunStart:
+
+                Vector2 Start = transform.position;
+
+                Vector2 End = new Vector2(transform.position.x, transform.position.y - GetComponent<SpriteRenderer>().bounds.size.y / 2 - 0.1f);
+
+                LayerMask layer = LayerMask.GetMask(new string[] { "Ground" });
+
+                if (Physics2D.Linecast(Start, End,layer))
+                {
+                    m_State = State.Run;
+
+                    gameObject.layer = LayerMask.NameToLayer("GroundPlayer");
+                }
+
+                break;
+        }
+
+        if(m_State == State.Fly || m_State == State.Run)
+        {
+            if (CrossPlatformInputManager.GetButton("Fire"))
+            {
+                if (m_ShotElapsedTime >= m_ShotInterval)
+                {
+                    SoundManager.Instance.PlaySE("fire", 1);
+
+                    GameObject BulletObj = Instantiate(m_Bullet);
+
+                    BulletObj.transform.position = transform.position;
+
+                    BulletObj.GetComponent<Rigidbody2D>().velocity = new Vector2(5, 0);
+
+                    m_ShotElapsedTime = 0;
                 }
                 else
                 {
-                    Dir = AxisX / AxisY;
+                    m_ShotElapsedTime += Time.deltaTime;
                 }
-
-                float Rate = 1.0f / Mathf.Sqrt(1.0f + Dir * Dir);
-
-                AxisX *= Rate * Speed;
-                AxisY *= Rate * Speed;
-            }
-
-            RigiBody.velocity = new Vector2(AxisX + MainCamera.GetComponent<CameraMovement>().Speed, AxisY);
-        }
-        else
-        {
-            //if (Input.GetKeyDown(KeyCode.Space) && JumpNum < IsJump.Length)
-            if (CrossPlatformInputManager.GetButtonDown("Jump") && JumpNum < IsJump.Length)
-            {
-                RigiBody.velocity = new Vector2(RigiBody.velocity.x, 0);
-
-                RigiBody.AddForce(Vector2.up * JumpPower[JumpNum], ForceMode2D.Impulse);
-
-                Anim.SetBool("IsJumping", true);
-
-                IsJumping = true;
-
-                JumpNum++;
-            }
-
-            Anim.SetFloat("JumpPower", RigiBody.velocity.y);
-
-            float ChaseSpeed = 0;
-
-            RigiBody.velocity = new Vector2(MainCamera.GetComponent<CameraMovement>().Speed + ChaseSpeed, RigiBody.velocity.y);
-        }
-
-        if (CrossPlatformInputManager.GetButton("Fire"))
-        {
-            if (ShotElapsedTime >= ShotInterval)
-            {
-                GameObject BulletObj = Instantiate(Bullet);
-
-                BulletObj.transform.position = transform.position;
-
-                BulletObj.GetComponent<Rigidbody2D>().velocity = new Vector2(5, 0);
-
-                ShotElapsedTime = 0;
             }
             else
             {
-                ShotElapsedTime += Time.deltaTime;
+                m_ShotElapsedTime = m_ShotInterval;
             }
         }
-        else
-        {
-            ShotElapsedTime = ShotInterval;
-        }
 
-        //
-        //移動方向によって向きを変える
-        //if (AxisX < 0 && transform.localScale.x > 0 || AxisX > 0 && transform.localScale.x < 0)
-        //{
-        //    Vector2 pos = transform.localScale;
-        //    pos.x *= -1;
-        //    transform.localScale = pos;
-        //}
+        if(transform.position.x < MainCameraManager.Instance.GetCameraCornerPos(new Vector2(0,0)).x ||
+           transform.position.y < MainCameraManager.Instance.GetCameraCornerPos(new Vector2(0,1)).y)
+        {
+            Death();
+        }
     }
 
-    void FixedUpdate()
+    void FlyStart()
     {
+        m_State = State.FlyStart;
 
+        m_Anim.SetTrigger("Fly");
+
+        gameObject.layer = LayerMask.NameToLayer("ChangeStatePlayer");
+
+        MainCameraManager.Instance.Change(-m_GravityScale,"UpCameraBlock");
+
+        m_RigiBody.gravityScale = -m_GravityScale;
+    }
+    void RunStart()
+    {
+        m_State = State.RunStart;
+        m_IsJumping = true;
+
+        m_Anim.SetTrigger("Run");
+        m_Anim.SetBool("IsJumping", true);
+
+        gameObject.layer = LayerMask.NameToLayer("ChangeStatePlayer");
+
+        m_RigiBody.velocity = new Vector2(0, 0);
+
+        m_RigiBody.gravityScale = m_GravityScale;
+
+        MainCameraManager.Instance.Change(m_GravityScale,"DownCameraBlock");
+
+        m_InputController.GetComponent<InputCtl>().RunButtonSet();
+    }
+
+    void Death()
+    {
+        GameObject obj = Instantiate(m_DeathObject);
+
+        obj.transform.position = transform.position;
+
+        Destroy(gameObject);
+
+        GameManager.Instance.GameOver();
     }
 
     void OnCollisionEnter2D(Collision2D col)
     {
-        if (col.gameObject.tag == "Enemy")
-        {
-            if (IsFly)
-            {
-                IsFly = false;
-
-                IsJumping = true;
-
-                Anim.SetTrigger("Run");
-
-                Anim.SetBool("IsJumping", true);
-
-                gameObject.layer = LayerMask.NameToLayer("DamagedPlayer");
-
-                RigiBody.gravityScale = GravityScale;
-
-                MainCamera.GetComponent<Rigidbody2D>().gravityScale = GravityScale;
-
-                MainCamera.GetComponent<Rigidbody2D>().collisionDetectionMode = CollisionDetectionMode2D.Continuous;
-
-                InputController.GetComponent<InputCtl>().RunButtonSet();
-            }
-            else
-            {
-
-            }
-        }
-
         if (col.gameObject.tag == "Block")
         {
-            if (IsJumping)
+            if (m_IsJumping)
             {
                 Vector2 Start = transform.position;
 
                 Vector2 End = new Vector2(transform.position.x, transform.position.y - GetComponent<SpriteRenderer>().bounds.size.y / 2 - 0.1f);
 
-                if (Physics2D.Linecast(Start, End, GroundLayer))
+                if (Physics2D.Linecast(Start, End, m_GroundLayer))
                 {
-                    for (int j = 0; j < IsJump.Length; j++)
+                    for (int j = 0; j < m_IsJump.Length; j++)
                     {
-                        IsJump[j] = false;
+                        m_IsJump[j] = false;
                     }
 
-                    Anim.SetBool("IsJumping", false);
+                    m_Anim.SetBool("IsJumping", false);
 
-                    IsJumping = false;
+                    m_IsJumping = false;
 
-                    JumpNum = 0;
-
+                    m_JumpNum = 0;
                 }
             }
         }
@@ -208,13 +293,70 @@ public class PlayerScript : MonoBehaviour
 
             Vector2 End = new Vector2(transform.position.x, transform.position.y - GetComponent<SpriteRenderer>().bounds.size.y / 2 - 0.1f);
 
-            if (!Physics2D.Linecast(Start, End, GroundLayer) && JumpNum == 0)
+            if (!Physics2D.Linecast(Start, End, m_GroundLayer) && m_JumpNum == 0)
             {
-                Anim.SetBool("IsJumping", true);
+                m_Anim.SetBool("IsJumping", true);
 
-                IsJumping = true;
+                m_IsJumping = true;
 
-                JumpNum++;
+                m_JumpNum++;
+            }
+        }
+    }
+
+    void OnTriggerEnter2D(Collider2D col)
+    {
+        if (col.gameObject.tag == "FlyEnemy" || col.gameObject.tag == "EnemyBullet")
+        {
+            switch (m_State)
+            {
+                case State.Fly:
+
+                    RunStart();
+
+                    break;
+
+                case State.Run:
+
+                    Death();
+
+                    break;
+            }
+        }
+        if (col.gameObject.tag == "GroundEnemy")
+        {
+            switch (m_State)
+            {
+                case State.Fly:
+
+                    RunStart();
+
+                    break;
+
+                case State.Run:
+
+                    if (col.gameObject.transform.position.y + col.gameObject.GetComponent<SpriteRenderer>().bounds.size.y / 2 < transform.position.y)
+                    {
+                        SoundManager.Instance.PlaySE("enemyjump", 0);
+
+                        m_RigiBody.velocity = new Vector2(0, 0);
+
+                        m_RigiBody.AddForce(Vector2.up * m_JumpPower[0], ForceMode2D.Impulse);
+
+                        m_Anim.SetBool("IsJumping", true);
+
+                        m_IsJumping = true;
+
+                        m_JumpNum = 1;
+
+                        col.GetComponent<Enemy>().Death();
+                    }
+                    else
+                    {
+                        Death();
+                    }
+
+                    break;
             }
         }
     }
