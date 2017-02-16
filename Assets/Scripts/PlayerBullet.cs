@@ -36,6 +36,13 @@ public class PlayerBullet : MonoBehaviour {
 
             Destroy(gameObject);
         }
+
+        if(col.tag == "Boss")
+        {
+            col.GetComponent<Boss>().ApplyDamage(m_Damage);
+
+            Destroy(gameObject);
+        }
     }
 
     void OnBecameInvisible()

@@ -77,6 +77,9 @@ public class GameManager : SingletonMonoBehaviour<GameManager> {
                 {
                     m_IsBossEnable = true;
 
+                    GameObject obj = Instantiate(m_BossObject);
+                    obj.GetComponent<Boss>().Spawn();
+
                     SoundManager.Instance.FadeOutBGM(2f, 0);
                     SoundManager.Instance.FadeInBGM("BossBGM", 2f, 1);
                 }
@@ -88,11 +91,18 @@ public class GameManager : SingletonMonoBehaviour<GameManager> {
     public void GameClear()
     {
         StartCoroutine(GameClearCoroutine());
+
+        ScrollManager.Instance.ScrollStop();
     }
 
     private IEnumerator GameClearCoroutine()
     {
         yield return new WaitForSeconds(2f);
+
+        SoundManager.Instance.FadeOutBGM(2f, 0);
+        SoundManager.Instance.FadeOutBGM(2f, 1);
+
+        FadeManager.Instance.LoadScene("Title");
     }
 
     public void GameOver()
@@ -101,12 +111,12 @@ public class GameManager : SingletonMonoBehaviour<GameManager> {
 
         SoundManager.Instance.FadeOutBGM(2f,0);
         SoundManager.Instance.FadeOutBGM(2f,1);
+
+        ScrollManager.Instance.ScrollStop();
     }
 
     private IEnumerator GameOverCoroutine()
     {
-        ScrollManager.Instance.ScrollStop();
-
         yield return new WaitForSeconds(2f);
 
         FadeManager.Instance.LoadScene("Title");
