@@ -52,8 +52,8 @@ public class MainCameraManager : SingletonMonoBehaviour<MainCameraManager>
         }
     }
 
-    public Vector2 GetCameraCornerPos(Vector2 pos)
+    public Vector2 GetCameraCornerPos(float x,float y)
     {
-        return m_camera.ScreenToWorldPoint(new Vector2(Screen.width * pos.x,-Screen.height * pos.y));
+        return m_camera.ScreenToWorldPoint(new Vector2(Screen.width * Mathf.Clamp01(x), -Screen.height * Mathf.Clamp01(y)));
     }
 }

@@ -9,7 +9,7 @@ public class Boss : MonoBehaviour {
 
     public float m_SpawnTime = 2;
 
-    private SpriteRenderer m_renderer;
+    protected SpriteRenderer m_renderer;
 
     //出現完了したか
     private bool m_IsSpawn = false;
@@ -30,7 +30,7 @@ public class Boss : MonoBehaviour {
 
     public virtual void Spawn()
     {
-        float x = MainCameraManager.Instance.transform.position.x + Screen.width / 2 + m_renderer.bounds.size.x / 2;
+        float x = MainCameraManager.Instance.GetCameraCornerPos(1,0).x + m_renderer.bounds.size.x / 2;
         float y = MainCameraManager.Instance.transform.position.y;
 
         transform.position = new Vector2(x, y);
@@ -40,9 +40,9 @@ public class Boss : MonoBehaviour {
 
     protected virtual IEnumerator SpawnCoroutine()
     {
-        float StartX = MainCameraManager.Instance.transform.position.x + Screen.width / 2 + m_renderer.bounds.size.x / 2;
+        float StartX = transform.position.x;
 
-        float targetX = MainCameraManager.Instance.transform.position.x + Screen.width / 2 - m_renderer.bounds.size.x / 2;
+        float targetX = MainCameraManager.Instance.GetCameraCornerPos(1, 0).x - m_renderer.bounds.size.x / 2;
 
         float currentTime = 0;
 
@@ -73,6 +73,8 @@ public class Boss : MonoBehaviour {
     {
         if((m_HP -= damage) <= 0)
         {
+            m_IsDied = true;
+
             Death();
         }
     }

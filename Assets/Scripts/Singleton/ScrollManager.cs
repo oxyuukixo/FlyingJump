@@ -25,6 +25,8 @@ public class ScrollManager : SingletonMonoBehaviour<ScrollManager>
     //すべてのオブジェクトをスクロールし終わっていたら
     private bool m_IsScrollEnd = false;
 
+    private bool m_IsScroll = true;
+
     void Awake()
     {
         if (this != Instance)
@@ -49,29 +51,32 @@ public class ScrollManager : SingletonMonoBehaviour<ScrollManager>
 	// Update is called once per frame
 	void Update ()
     {
-        Scroll(m_BackObject);
-        
-        if(ScrollCheck(m_BackObject[0]))
+        if(m_IsScroll)
         {
-            Destroy(m_BackObject[0]);
-            m_BackObject.RemoveAt(0);
-            BackUpCount();
-            AddObject(m_BackObject, m_BackList, m_BackNum);
-        }
+            Scroll(m_BackObject);
 
-        Scroll(m_StageObject);
-
-        if (ScrollCheck(m_StageObject[0]))
-        {
-            if(m_IsScrollEnd)
+            if (ScrollCheck(m_BackObject[0]))
             {
-                GameManager.Instance.ScrollEnd();
+                Destroy(m_BackObject[0]);
+                m_BackObject.RemoveAt(0);
+                BackUpCount();
+                AddObject(m_BackObject, m_BackList, m_BackNum);
             }
 
-            Destroy(m_StageObject[0]);
-            m_StageObject.RemoveAt(0);
-            StageUpCount();
-            AddObject(m_StageObject, m_StageList, m_StageNum);
+            Scroll(m_StageObject);
+
+            if (ScrollCheck(m_StageObject[0]))
+            {
+                if (m_IsScrollEnd)
+                {
+                    GameManager.Instance.ScrollEnd();
+                }
+
+                Destroy(m_StageObject[0]);
+                m_StageObject.RemoveAt(0);
+                StageUpCount();
+                AddObject(m_StageObject, m_StageList, m_StageNum);
+            }
         }
     }
 
@@ -166,6 +171,11 @@ public class ScrollManager : SingletonMonoBehaviour<ScrollManager>
 
     public void ScrollStop()
     {
-        m_ScrollSpeed = 0;
+        m_IsScroll = false;
+    }
+
+    public void ScrollStart()
+    {
+        m_IsScroll = true;
     }
 }

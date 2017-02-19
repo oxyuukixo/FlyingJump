@@ -209,8 +209,8 @@ public class PlayerScript : MonoBehaviour
             }
         }
 
-        if(transform.position.x < MainCameraManager.Instance.GetCameraCornerPos(new Vector2(0,0)).x ||
-           transform.position.y < MainCameraManager.Instance.GetCameraCornerPos(new Vector2(0,1)).y)
+        if(transform.position.x < MainCameraManager.Instance.GetCameraCornerPos(0,0).x ||
+           transform.position.y < MainCameraManager.Instance.GetCameraCornerPos(0,1).y)
         {
             Death();
         }
@@ -306,7 +306,7 @@ public class PlayerScript : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D col)
     {
-        if (col.gameObject.tag == "FlyEnemy" || col.gameObject.tag == "EnemyBullet")
+        if (col.gameObject.tag == "FlyEnemy" || col.gameObject.tag == "EnemyBullet" || col.gameObject.tag == "Boss")
         {
             switch (m_State)
             {

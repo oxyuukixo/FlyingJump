@@ -34,7 +34,7 @@ public class Enemy : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
 
-        if (transform.position.x < MainCameraManager.Instance.GetCameraCornerPos(new Vector2(1, 0)).x)
+        if (transform.position.x < MainCameraManager.Instance.GetCameraCornerPos(1, 0).x)
         {
             m_MoveScript.Move();
 

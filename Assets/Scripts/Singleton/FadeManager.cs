@@ -19,6 +19,11 @@ public class FadeManager : SingletonMonoBehaviour<FadeManager>
     //シーン移行するか
     private bool m_IsLoadScene = false;
 
+    //関数実行するフェードをしているか
+    private bool m_IsFanctionFade = false;
+
+    public delegate void CallBackFancton();
+
     //=============================================================================
     //
     // Purpose : Awake処理．
@@ -164,5 +169,38 @@ public class FadeManager : SingletonMonoBehaviour<FadeManager>
         }
 
         m_IsFadeing = false;
+    }
+
+    public void FadeFanction(CallBackFancton mainFx,CallBackFancton endFx, float fadeOutTime = 2f, float fadeInTime = 2f)
+    {
+        if (!m_IsFadeing && !m_IsFanctionFade)
+        {
+            m_IsFanctionFade = true;
+
+            StartCoroutine(FadeFanctionCorution(mainFx, endFx, fadeOutTime, fadeInTime));
+        }
+    }
+
+    private IEnumerator FadeFanctionCorution(CallBackFancton mainFx, CallBackFancton endFx, float fadeOutTime = 2f,float fadeInTime = 2f)
+    {
+        FadeOut(fadeOutTime);
+
+        while (m_IsFadeing)
+        {
+            yield return null;
+        }
+
+        mainFx();
+
+        FadeIn(fadeInTime);
+
+        while (m_IsFadeing)
+        {
+            yield return null;
+        }
+
+        endFx();
+
+        m_IsFanctionFade = false;
     }
 }
